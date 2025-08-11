@@ -1,0 +1,10 @@
+{
+  "name": "ComfyUI Custom Node Lister",
+  "description": "A ComfyUI custom node that lists installed custom node packages in ComfyUI Manager compatible format",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": "https://github.com/tg-tjmitchell/comfyui-custom-node-lister",
+  "python_dependencies": [],
+  "comfyui_dependencies": []
+}

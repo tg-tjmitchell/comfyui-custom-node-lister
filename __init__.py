@@ -7,6 +7,10 @@
 import sys
 import os
 
+# Global variables to export - ComfyUI looks for these
+NODE_CLASS_MAPPINGS = {}
+NODE_DISPLAY_NAME_MAPPINGS = {}
+
 class CustomNodeLister:
     """
     A ComfyUI node that lists ComfyUI Manager compatible package names with install commands
@@ -27,7 +31,12 @@ class CustomNodeLister:
     def list_nodes(self):
         try:
             # Import ComfyUI's node registry
-            from nodes import NODE_CLASS_MAPPINGS
+            try:
+                from nodes import NODE_CLASS_MAPPINGS
+            except ImportError:
+                # Fallback if nodes module isn't available
+                return ("ComfyUI nodes module not available. Make sure this is running in ComfyUI environment.",)
+            
             import os
             import sys
             
@@ -36,7 +45,7 @@ class CustomNodeLister:
             
             # Try to extract ComfyUI Manager compatible package names
             custom_packages = set()
-            pax`ckage_to_nodes = {}
+            package_to_nodes = {}
             
             for node_name, node_class in all_nodes.items():
                 try:
@@ -117,13 +126,9 @@ class CustomNodeLister:
             return (f"Error listing packages: {str(e)}",)
 
 # Required mappings for ComfyUI to recognize this as a custom node
-NODE_CLASS_MAPPINGS = {
-    "CustomNodeLister": CustomNodeLister
-}
+NODE_CLASS_MAPPINGS["CustomNodeLister"] = CustomNodeLister
 
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "CustomNodeLister": "List ComfyUI Manager Packages"
-}
+NODE_DISPLAY_NAME_MAPPINGS["CustomNodeLister"] = "List ComfyUI Manager Packages"
 
 # This will be called when the module is imported
 print("ComfyUI Custom Node Lister loaded successfully!")
