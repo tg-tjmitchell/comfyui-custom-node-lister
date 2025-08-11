@@ -1,7 +1,6 @@
 # ComfyUI Plugin: List Custom Nodes
 
 import comfy
-import comfy.registry
 
 def list_custom_nodes():
     nodes = set(comfy.registry.NODE_REGISTRY.keys())
