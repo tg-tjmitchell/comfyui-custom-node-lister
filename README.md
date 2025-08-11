@@ -1,7 +1,7 @@
-ComfyUI Custom Node Lister
-============================
+ComfyUI Manager Package Lister
+================================
 
-A ComfyUI custom node that provides a utility to list only custom nodes (excluding built-in ComfyUI nodes).
+A ComfyUI custom node that lists installed custom node packages in ComfyUI Manager compatible format, providing the exact package names and install commands for sharing or reinstalling.
 
 ## Installation
 
@@ -15,23 +15,55 @@ A ComfyUI custom node that provides a utility to list only custom nodes (excludi
 
 ## Usage
 
-After installation, you'll find a new node called "List Custom Nodes Only" in the utilities category. This node will output a string containing only the custom nodes in your ComfyUI installation, filtering out built-in nodes.
+After installation, you'll find a new node called "List ComfyUI Manager Packages" in the utilities category. This node will output:
+
+- Package names compatible with ComfyUI Manager
+- Ready-to-use `comfy-cli install` commands
+- Which nodes each package provides
+- Total count of installed custom packages
+
+## Example Output
+
+```
+ComfyUI Manager Compatible Packages (3 found):
+==================================================
+
+📦 ComfyUI-AnimateDiff-Evolved
+   Install: comfy-cli install ComfyUI-AnimateDiff-Evolved
+   Provides: AnimateDiffLoader, AnimateDiffSampler, AnimateDiffCombine
+
+📦 ComfyUI-Manager
+   Install: comfy-cli install ComfyUI-Manager
+   Provides: ManagerUpdate, ManagerInstall + 5 more
+
+📦 comfyui-custom-node-lister
+   Install: comfy-cli install comfyui-custom-node-lister
+   Provides: CustomNodeLister
+```
 
 ## Features
 
-- Lists only custom nodes (excludes built-in ComfyUI nodes)
-- Uses module path detection to identify custom nodes
-- Fallback filtering for edge cases
-- Shows count of custom nodes found
-- Simple utility node for debugging and exploration
-- No dependencies required
+- **ComfyUI Manager Compatible**: Shows actual package names that work with `comfy-cli install`
+- **Ready-to-use Commands**: Copy-paste install commands for easy sharing
+- **Package Mapping**: Shows which nodes each package provides
+- **Clean Output**: Groups nodes by their source packages
+- **Installation Ready**: Perfect for recreating setups on new ComfyUI installations
+
+## Use Cases
+
+- **Backup/Restore**: Get a list of all your custom packages for easy reinstallation
+- **Sharing Setups**: Share your custom node configuration with others
+- **Documentation**: Keep track of what custom nodes you have installed
+- **Migration**: Move your custom node setup to a new ComfyUI installation
 
 ## How it works
 
-The node uses two methods to identify custom nodes:
+The node analyzes the module paths of installed custom nodes to:
 
-1. **Primary method**: Checks if the node's module path contains 'custom_nodes'
-2. **Fallback method**: Excludes nodes with common built-in prefixes like 'Load', 'Save', 'Preview', etc.
+1. **Extract Package Names**: Identifies the original package/repository name from the module structure
+2. **Filter Built-ins**: Excludes ComfyUI's built-in nodes
+3. **Group by Package**: Organizes nodes by their source package
+4. **Generate Commands**: Provides ready-to-use `comfy-cli install` commands
 
 ## Troubleshooting
 
@@ -39,3 +71,5 @@ If you get import errors, make sure:
 1. This folder is placed in the `custom_nodes` directory of your ComfyUI installation
 2. ComfyUI has been restarted after installation
 3. The folder is named correctly (avoid spaces and special characters)
+
+If some packages don't appear, they may not follow standard ComfyUI Manager naming conventions.
