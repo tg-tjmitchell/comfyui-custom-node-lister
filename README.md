@@ -1,7 +1,7 @@
 ComfyUI Custom Node Lister
 ============================
 
-A simple ComfyUI custom node that provides a utility to list all available nodes in the ComfyUI interface.
+A ComfyUI custom node that provides a utility to list only custom nodes (excluding built-in ComfyUI nodes).
 
 ## Installation
 
@@ -15,13 +15,23 @@ A simple ComfyUI custom node that provides a utility to list all available nodes
 
 ## Usage
 
-After installation, you'll find a new node called "List Custom Nodes" in the utilities category. This node will output a string containing all available nodes in your ComfyUI installation.
+After installation, you'll find a new node called "List Custom Nodes Only" in the utilities category. This node will output a string containing only the custom nodes in your ComfyUI installation, filtering out built-in nodes.
 
 ## Features
 
-- Lists all registered nodes in ComfyUI
+- Lists only custom nodes (excludes built-in ComfyUI nodes)
+- Uses module path detection to identify custom nodes
+- Fallback filtering for edge cases
+- Shows count of custom nodes found
 - Simple utility node for debugging and exploration
 - No dependencies required
+
+## How it works
+
+The node uses two methods to identify custom nodes:
+
+1. **Primary method**: Checks if the node's module path contains 'custom_nodes'
+2. **Fallback method**: Excludes nodes with common built-in prefixes like 'Load', 'Save', 'Preview', etc.
 
 ## Troubleshooting
 
