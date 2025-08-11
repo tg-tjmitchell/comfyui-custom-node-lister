@@ -13,7 +13,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {}
 
 class CustomNodeLister:
     """
-    A ComfyUI node that lists ComfyUI Manager compatible package names with install commands
+    A ComfyUI node that lists ComfyUI Manager compatible package names with:
+    - Output 1: Full list including install commands and brief node summaries
+    - Output 2: Names-only CSV (package names only, no commands or icons)
     """
     
     @classmethod
@@ -23,8 +25,8 @@ class CustomNodeLister:
             "optional": {}
         }
     
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("package_list",)
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("package_list", "package_names")
     FUNCTION = "list_nodes"
     CATEGORY = "utilities"
     
@@ -107,6 +109,7 @@ class CustomNodeLister:
             if packages:
                 result_lines = [f"ComfyUI Manager Compatible Packages ({len(packages)} found):", "=" * 50]
                 for package_name in packages:
+                    # Full details lines
                     result_lines.append(f"\n📦 {package_name}")
                     result_lines.append(f"   Install: comfy-cli install {package_name}")
                     nodes_list = package_to_nodes.get(package_name)
@@ -115,13 +118,18 @@ class CustomNodeLister:
                             result_lines.append(f"   Provides: {', '.join(nodes_list)}")
                         else:
                             result_lines.append(f"   Provides: {', '.join(nodes_list[:3])} + {len(nodes_list)-3} more")
+
                 node_list = "\n".join(result_lines)
+                # CSV of package names (no icon, no extra spaces)
+                names_only = ",".join(packages)
             else:
                 node_list = "No custom packages found in custom_nodes directory."
+                names_only = ""
 
-            return (node_list,)
+            return (node_list, names_only)
         except Exception as e:
-            return (f"Error listing packages: {str(e)}",)
+            err = f"Error listing packages: {str(e)}"
+            return (err, err)
 
 # Required mappings for ComfyUI to recognize this as a custom node
 NODE_CLASS_MAPPINGS["CustomNodeLister"] = CustomNodeLister
