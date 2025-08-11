@@ -30,97 +30,95 @@ class CustomNodeLister:
     
     def list_nodes(self):
         try:
-            # Import ComfyUI's node registry
-            try:
-                from nodes import NODE_CLASS_MAPPINGS
-            except ImportError:
-                # Fallback if nodes module isn't available
-                return ("ComfyUI nodes module not available. Make sure this is running in ComfyUI environment.",)
-            
             import os
             import sys
-            
-            # Get all registered nodes
-            all_nodes = NODE_CLASS_MAPPINGS
-            
-            # Try to extract ComfyUI Manager compatible package names
-            custom_packages = set()
-            package_to_nodes = {}
-            
-            for node_name, node_class in all_nodes.items():
+
+            # 1) Find the custom_nodes directory robustly based on this file's location
+            def find_custom_nodes_dir(start_path: str):
+                cur = os.path.abspath(start_path)
+                # Walk up a few levels to find a folder literally named 'custom_nodes'
+                for _ in range(6):
+                    base = os.path.basename(cur)
+                    if base == 'custom_nodes':
+                        return cur
+                    parent = os.path.dirname(cur)
+                    if parent == cur:
+                        break
+                    cur = parent
+                # Try sibling search one level up from this file
+                root = os.path.dirname(os.path.abspath(start_path))
+                for entry in os.listdir(root):
+                    p = os.path.join(root, entry)
+                    if os.path.isdir(p) and os.path.basename(p) == 'custom_nodes':
+                        return p
+                return None
+
+            this_file = os.path.abspath(__file__)
+            custom_nodes_dir = find_custom_nodes_dir(this_file)
+
+            # 2) Enumerate all package folders under custom_nodes (folder names are the package names)
+            discovered_packages = []
+            if custom_nodes_dir and os.path.isdir(custom_nodes_dir):
                 try:
-                    # Get the module where this node class is defined
-                    module_name = node_class.__module__
-                    
-                    # Skip built-in nodes (from main 'nodes' module)
-                    if module_name.startswith('nodes') or module_name == '__main__':
-                        continue
-                    
-                    # Check if it's from custom_nodes directory
-                    if 'custom_nodes' in module_name:
-                        # Extract the package name from the module path
-                        # e.g., "custom_nodes.ComfyUI-Manager.__init__" -> "ComfyUI-Manager"
-                        parts = module_name.split('.')
-                        if len(parts) >= 2 and parts[0] == 'custom_nodes':
-                            package_name = parts[1]
-                            custom_packages.add(package_name)
-                            
-                            # Track which nodes belong to which package
-                            if package_name not in package_to_nodes:
-                                package_to_nodes[package_name] = []
-                            package_to_nodes[package_name].append(node_name)
-                    
-                    # Also try to get the actual module file path
-                    elif hasattr(node_class, '__module__'):
-                        try:
-                            module = sys.modules.get(module_name)
-                            if module and hasattr(module, '__file__') and module.__file__:
-                                file_path = module.__file__
-                                # Check if it's in a custom_nodes directory
-                                if 'custom_nodes' in file_path:
-                                    # Extract package name from file path
-                                    path_parts = file_path.replace('\\', '/').split('/')
-                                    custom_nodes_idx = -1
-                                    for i, part in enumerate(path_parts):
-                                        if part == 'custom_nodes':
-                                            custom_nodes_idx = i
-                                            break
-                                    
-                                    if custom_nodes_idx >= 0 and custom_nodes_idx + 1 < len(path_parts):
-                                        package_name = path_parts[custom_nodes_idx + 1]
-                                        custom_packages.add(package_name)
-                                        
-                                        if package_name not in package_to_nodes:
-                                            package_to_nodes[package_name] = []
-                                        package_to_nodes[package_name].append(node_name)
-                        except:
-                            pass
-                            
+                    for name in os.listdir(custom_nodes_dir):
+                        full = os.path.join(custom_nodes_dir, name)
+                        if not os.path.isdir(full):
+                            continue
+                        if name.startswith('.') or name in {'__pycache__'}:
+                            continue
+                        discovered_packages.append(name)
                 except Exception:
-                    # Skip nodes we can't analyze
-                    continue
-            
-            # Format the output for ComfyUI Manager compatibility
-            if custom_packages:
-                result_lines = [f"ComfyUI Manager Compatible Packages ({len(custom_packages)} found):"]
-                result_lines.append("=" * 50)
-                
-                for package_name in sorted(custom_packages):
+                    pass
+
+            # 3) Optionally, enrich with node names using ComfyUI's registry if available
+            package_to_nodes = {}
+            try:
+                from nodes import NODE_CLASS_MAPPINGS as ALL_NODE_MAPPINGS  # type: ignore
+                for node_name, node_class in ALL_NODE_MAPPINGS.items():
+                    try:
+                        module_name = getattr(node_class, '__module__', '') or ''
+                        module = sys.modules.get(module_name)
+                        file_path = getattr(module, '__file__', None) if module else None
+
+                        # Prefer extracting package from file path inside custom_nodes
+                        pkg_name = None
+                        src_hint = file_path or module_name
+                        if src_hint:
+                            hint = str(src_hint).replace('\\', '/').split('/')
+                            for i, part in enumerate(hint):
+                                if part == 'custom_nodes' and i + 1 < len(hint):
+                                    pkg_name = hint[i + 1]
+                                    break
+
+                        if pkg_name:
+                            package_to_nodes.setdefault(pkg_name, []).append(node_name)
+                            if pkg_name not in discovered_packages:
+                                discovered_packages.append(pkg_name)
+                    except Exception:
+                        continue
+            except Exception:
+                # Registry not available; proceed with directory discovery only
+                pass
+
+            # Deduplicate and sort
+            packages = sorted({p for p in discovered_packages})
+
+            # 4) Format output
+            if packages:
+                result_lines = [f"ComfyUI Manager Compatible Packages ({len(packages)} found):", "=" * 50]
+                for package_name in packages:
                     result_lines.append(f"\n📦 {package_name}")
                     result_lines.append(f"   Install: comfy-cli install {package_name}")
-                    
-                    # Show the nodes provided by this package
-                    if package_name in package_to_nodes:
-                        nodes_list = package_to_nodes[package_name]
+                    nodes_list = package_to_nodes.get(package_name)
+                    if nodes_list:
                         if len(nodes_list) <= 3:
                             result_lines.append(f"   Provides: {', '.join(nodes_list)}")
                         else:
                             result_lines.append(f"   Provides: {', '.join(nodes_list[:3])} + {len(nodes_list)-3} more")
-                
                 node_list = "\n".join(result_lines)
             else:
-                node_list = "No custom packages found that are ComfyUI Manager compatible."
-            
+                node_list = "No custom packages found in custom_nodes directory."
+
             return (node_list,)
         except Exception as e:
             return (f"Error listing packages: {str(e)}",)
