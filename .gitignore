@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.env
+.env
+venv/
+ENV/
+*.egg-info/
+*.egg
+*.log
+*.sqlite3
+*.db
+*.bak
+*.tmp
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.orig
+*.rej
+# Windows
+*.exe
+*.dll
+*.obj
+*.lib
+*.pdb
+*.idb
+*.class
+*.psd
+*.db
+*.lnk
+# Misc
+*.zip
+*.tar.gz
+*.tar
+*.rar
+*.7z
+*.gz
+*.tgz
+*.bak
+*.tmp
+*.swp
+*.swo
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+# ComfyUI
+output/
+input/
+models/
+checkpoints/
